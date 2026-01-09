@@ -10,12 +10,24 @@
 
     <div class="container">
       <p>
-        Each dot is a subreddit. Two dots within the same cluster are 
+        Each dot is a subreddit. Two dots within the same cluster are
         usually close to each other if multiple users frequently leave comments on both subreddits.
       </p>
       <p>
         If you find something missing, please feel free to <a href='https://github.com/anvaka/map-of-reddit-data#how-to-add-a-new-subreddit' target='_blank' class='accent'>edit the map</a>.
       </p>
+
+      <!-- Dev Tools Section -->
+      <div style="margin: 20px 0; padding: 15px; background: #f0f0f0; border-radius: 4px;">
+        <h4 style="margin-top: 0; text-align: left;">🛠️ Creator Tools (Beta)</h4>
+        <p style="font-size: 12px; color: #666;">
+          Client-side creator platform - works without backend!
+        </p>
+        <a href='#' @click.prevent='openDevTools' class='accent' style="display: block; padding: 8px; background: #4CAF50; color: white; text-align: center; border-radius: 4px; margin-top: 10px;">
+          Open Creator Dashboard
+        </a>
+      </div>
+
       <p>
         I spent last couple years developing this website as a hobby project. If you enjoy
         this work please support it <a href="https://www.paypal.com/paypalme/anvakos/5" class="accent">on Paypal</a>, <a href="https://www.patreon.com/anvaka" class='accent'>Patreon</a> or
@@ -41,6 +53,10 @@ export default {
   },
   methods: {
     onClose() {
+      this.$emit('close');
+    },
+    openDevTools() {
+      this.$emit('open-dev-tools');
       this.$emit('close');
     },
     handleKeyDown(e) {
