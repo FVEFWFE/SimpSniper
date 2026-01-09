@@ -74,10 +74,22 @@
     ></tooltip>
 
     <transition name='fade'>
-      <div class='backdrop' v-if='sidebarVisible || improveVisible' @click="onBackdropClick"></div>
+      <div class='backdrop' v-if='sidebarVisible || improveVisible || devToolsVisible' @click="onBackdropClick"></div>
     </transition>
     <transition name='slide-left'>
-      <sidebar v-if="sidebarVisible" @close='sidebarVisible = false'></sidebar>
+      <sidebar v-if="sidebarVisible" @close='sidebarVisible = false' @open-dev-tools='devToolsVisible = true'></sidebar>
+    </transition>
+
+    <transition name='slide-top'>
+      <div v-if='devToolsVisible' class='dev-tools-window'>
+        <div class='dev-tools-header'>
+          <h3>Creator Dashboard</h3>
+          <a href='#' @click.prevent='devToolsVisible = false' class='close-btn'>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+          </a>
+        </div>
+        <example-client-side></example-client-side>
+      </div>
     </transition>
     </div>
   </div>
@@ -94,6 +106,7 @@ import Sidebar from "./components/Sidebar";
 import ImproveWindow from "./components/ImproveWindow";
 import Subreddit from "vuereddit";
 import SmallPreview from "./SmallPreview";
+import ExampleClientSide from "./components/ExampleClientSide";
 import appState from "./appState.js";
 import createFirstInteractionListener from './lib/createFirstInteractionListener';
 import {isWebGLEnabled} from 'w-gl';
@@ -111,6 +124,7 @@ export default {
     Sidebar,
     ImproveWindow,
     SmallPreview,
+    ExampleClientSide,
   },
   name: "app",
   watch: {
@@ -174,6 +188,7 @@ export default {
     onBackdropClick() {
       this.sidebarVisible = false;
       this.improveVisible = false;
+      this.devToolsVisible = false;
     },
     onImproveClick() {
       this.improveVisible = true;
@@ -284,6 +299,7 @@ export default {
   data() {
     return {
       improveVisible: false,
+      devToolsVisible: false,
       isWebGLEnabled: false,
       isStreetViewMode: false,
       isSubgraphLayoutInProgress: false,
@@ -626,6 +642,45 @@ a {
     position: absolute;
     right: 8px;
     top: 8px;
+  }
+}
+.dev-tools-window {
+  position: fixed;
+  transform: translate(-50%, -50%);
+  top: 50%;
+  left: 50%;
+  width: 90%;
+  max-width: 1000px;
+  max-height: 90vh;
+  background: white;
+  z-index: 3;
+  box-shadow: 0 -1px 24px rgb(0 0 0);
+  overflow-y: auto;
+  border-radius: 8px;
+
+  .dev-tools-header {
+    position: sticky;
+    top: 0;
+    background: white;
+    border-bottom: 1px solid #ddd;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 1;
+
+    h3 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .close-btn {
+      cursor: pointer;
+      opacity: 0.6;
+      &:hover {
+        opacity: 1;
+      }
+    }
   }
 }
 a.accent {
