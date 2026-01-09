@@ -16,37 +16,38 @@
       </div>
     </div>
 
-    <!-- Reddit Account -->
+    <!-- Shadowban Checker -->
     <div class="account-card">
-      <h3>Reddit Account</h3>
+      <h3>Shadowban Checker</h3>
 
-      <div v-if="!authenticated">
-        <button @click="connectReddit">Connect Reddit Account</button>
-        <p class="hint">Uses Reddit OAuth (no backend required)</p>
-      </div>
+      <div>
+        <input
+          v-model="usernameToCheck"
+          placeholder="Enter Reddit username (without u/)"
+          @keyup.enter="checkShadowban"
+        />
+        <button @click="checkShadowban" :disabled="checking">
+          {{ checking ? 'Checking...' : 'Check Shadowban' }}
+        </button>
 
-      <div v-else-if="account">
-        <div class="account-info">
-          <strong>u/{{ account.reddit_username }}</strong>
-          <div>
-            Post Karma: {{ account.post_karma }}
-            | Comment Karma: {{ account.comment_karma }}
-          </div>
-          <div>Account Age: {{ account.account_age_days }} days</div>
-
-          <button @click="checkShadowban" :disabled="checking">
-            {{ checking ? 'Checking...' : 'Check Shadowban' }}
-          </button>
-
-          <div v-if="shadowbanResult">
-            <span v-if="shadowbanResult.is_shadowbanned" style="color: red">
-              ⚠️ Account may be shadowbanned
+        <div v-if="shadowbanResult" class="shadowban-result">
+          <div v-if="shadowbanResult.exists">
+            <span style="color: green">
+              ✅ u/{{ shadowbanResult.username }} exists and is active
             </span>
-            <span v-else style="color: green">
-              ✅ Account looks healthy
+            <div class="account-stats">
+              Post Karma: {{ shadowbanResult.link_karma?.toLocaleString() }}
+              | Comment Karma: {{ shadowbanResult.comment_karma?.toLocaleString() }}
+            </div>
+          </div>
+          <div v-else>
+            <span style="color: red">
+              ⚠️ User not found (may be shadowbanned or doesn't exist)
             </span>
           </div>
         </div>
+
+        <p class="hint">Check if a Reddit account is shadowbanned using public API (no auth required)</p>
       </div>
     </div>
 
@@ -139,6 +140,7 @@
 
 <script>
 import dataService from '@/lib/dataService';
+import publicRedditClient from '@/lib/publicRedditClient';
 
 export default {
   name: 'ExampleClientSide',
@@ -147,8 +149,7 @@ export default {
     return {
       backendStatus: null,
       backendUrl: process.env.VUE_APP_BACKEND_URL || 'http://localhost:3001',
-      authenticated: false,
-      account: null,
+      usernameToCheck: '',
       checking: false,
       shadowbanResult: null,
       subredditToScrape: '',
@@ -163,33 +164,19 @@ export default {
   async mounted() {
     await dataService.init();
     this.backendStatus = dataService.backendAvailable;
-
-    // Check if already authenticated
-    this.authenticated = dataService.redditClient?.isAuthenticated() || false;
-
-    if (this.authenticated) {
-      await this.loadAccount();
-    }
-
     await this.loadSubreddits();
   },
 
   methods: {
-    async connectReddit() {
-      await dataService.connectRedditAccount();
-    },
-
-    async loadAccount() {
-      const accounts = await dataService.getRedditAccounts();
-      this.account = accounts[0] || null;
-    },
-
     async checkShadowban() {
-      if (!this.account) return;
+      if (!this.usernameToCheck) {
+        alert('Please enter a username');
+        return;
+      }
 
       this.checking = true;
       try {
-        this.shadowbanResult = await dataService.checkAccountHealth(this.account.id);
+        this.shadowbanResult = await publicRedditClient.checkShadowban(this.usernameToCheck);
       } catch (err) {
         alert('Error checking shadowban: ' + err.message);
       } finally {
@@ -198,8 +185,8 @@ export default {
     },
 
     async scrapeSubreddit() {
-      if (!this.subredditToScrape || !this.authenticated) {
-        alert('Please connect Reddit account first');
+      if (!this.subredditToScrape) {
+        alert('Please enter a subreddit name');
         return;
       }
 
@@ -207,6 +194,7 @@ export default {
       try {
         this.scrapedData = await dataService.scrapeSubreddit(this.subredditToScrape);
         await this.loadSubreddits();
+        this.subredditToScrape = ''; // Clear input
       } catch (err) {
         alert('Error scraping: ' + err.message);
       } finally {
@@ -361,5 +349,18 @@ select {
   padding: 20px;
   text-align: center;
   color: #999;
+}
+
+.shadowban-result {
+  margin-top: 15px;
+  padding: 15px;
+  background: white;
+  border-radius: 4px;
+}
+
+.account-stats {
+  font-size: 14px;
+  color: #666;
+  margin-top: 8px;
 }
 </style>

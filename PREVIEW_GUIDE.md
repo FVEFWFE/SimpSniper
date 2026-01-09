@@ -2,36 +2,13 @@
 
 Follow these simple steps to see the NSFW Reddit map with the new Creator Platform features!
 
-## 🚀 Quick Start (5 minutes)
+## 🚀 Quick Start (2 minutes)
 
-### 1. **Get Reddit OAuth Credentials** (Optional but recommended)
+### ✨ **NO REDDIT API KEY REQUIRED!**
 
-To use the creator tools, you need a Reddit app:
+This app uses Reddit's public JSON endpoints - **no authentication or API setup needed**. Just start and use!
 
-1. Go to https://www.reddit.com/prefs/apps
-2. Scroll to bottom and click **"create another app..."**
-3. Fill in:
-   - **name**: `My Creator Tool` (or anything)
-   - **type**: Select **"installed app"** or **"script"**
-   - **description**: (optional)
-   - **about url**: (optional)
-   - **redirect uri**: `http://localhost:8080/auth/callback`
-4. Click **"create app"**
-5. Copy the **client ID** (the string under "personal use script")
-
-### 2. **Configure Your App**
-
-Edit the `.env` file:
-
-```bash
-# Replace with your Reddit client ID
-VUE_APP_REDDIT_CLIENT_ID=your_client_id_here
-VUE_APP_REDDIT_REDIRECT_URI=http://localhost:8080/auth/callback
-```
-
-⚠️ **Note:** If you skip this step, the map will still work, but you won't be able to use the creator tools (scraping, posting, etc.).
-
-### 3. **Start the Development Server**
+### 1. **Start the Development Server**
 
 ```bash
 npm run serve
@@ -46,7 +23,7 @@ You should see:
   - Network: http://192.168.x.x:8080/
 ```
 
-### 4. **Open in Browser**
+### 2. **Open in Browser**
 
 Go to **http://localhost:8080**
 
@@ -67,34 +44,27 @@ Go to **http://localhost:8080**
 
 ## 🎯 What You Can Do in Creator Dashboard
 
-### **Without Reddit Account Connected:**
-- See backend status (client-side vs backend mode)
-- View the interface
-- Test subreddit search/filtering
+### **Everything Works Without Authentication!**
 
-### **With Reddit Account Connected:**
-
-1. **Click "Connect Reddit Account"**
-   - You'll be redirected to Reddit to authorize
-   - After authorization, you'll be redirected back
-   - Your account info will appear
-
-2. **Check Shadowban**
+1. **Check Shadowban**
+   - Enter any Reddit username (without u/)
    - Click "Check Shadowban" button
-   - See if your account is healthy
+   - See if the account exists and is healthy
+   - View karma and account stats
 
-3. **Scrape Subreddit Data**
+2. **Scrape Subreddit Data**
    - Enter a subreddit name (without "r/")
    - Example: `gonewild`, `feet`, `petite`
    - Click "Scrape"
    - See rules, requirements, engagement metrics
+   - **No authentication needed!**
 
-4. **Search Scraped Subreddits**
+3. **Search Scraped Subreddits**
    - Use the search box to find subreddits
    - Filter by niche (Feet, Petite, etc.)
    - View detailed info for each
 
-5. **Export Your Data**
+4. **Export Your Data**
    - Click "Export All Data (JSON)"
    - Downloads all your local data as backup
 
@@ -156,12 +126,6 @@ The map should only show NSFW subreddits. Try searching for:
 - Make sure WebGL is enabled
 - Try Chrome/Firefox (some browsers don't support WebGL)
 
-### **"Not authenticated" errors**
-
-- You need to connect a Reddit account first
-- Make sure your `.env` has the correct `VUE_APP_REDDIT_CLIENT_ID`
-- Check that redirect URI matches exactly: `http://localhost:8080/auth/callback`
-
 ### **Scraping fails**
 
 - Reddit has rate limits (60 requests/minute)
@@ -178,11 +142,12 @@ The map should only show NSFW subreddits. Try searching for:
 
 ### **New Features:**
 
-1. ✅ **NSFW-only filter** - Only shows NSFW subreddits
-2. ✅ **Creator Dashboard** - Integrated into sidebar
-3. ✅ **Client-side mode** - Works without backend
-4. ✅ **Subreddit scraper** - Get rules & requirements
-5. ✅ **Local storage** - All data stays in your browser
+1. ✅ **NO AUTH REQUIRED** - Uses Reddit's public API, no login needed
+2. ✅ **NSFW-only filter** - Only shows NSFW subreddits
+3. ✅ **Creator Dashboard** - Integrated into sidebar
+4. ✅ **Client-side mode** - Works without backend
+5. ✅ **Subreddit scraper** - Get rules & requirements
+6. ✅ **Local storage** - All data stays in your browser
 
 ### **Original Features Still Work:**
 

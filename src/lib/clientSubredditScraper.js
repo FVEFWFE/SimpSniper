@@ -1,7 +1,8 @@
 // Client-side subreddit scraper
-// Fetches and parses subreddit data directly from Reddit API
+// Fetches and parses subreddit data directly from Reddit's PUBLIC API
+// NO AUTHENTICATION REQUIRED - uses public .json endpoints
 
-import redditClient from './redditClient';
+import publicRedditClient from './publicRedditClient';
 import localDB from './localDatabase';
 
 class ClientSubredditScraper {
@@ -11,20 +12,20 @@ class ClientSubredditScraper {
 
     try {
       // Get basic subreddit info
-      const sub = await redditClient.getSubreddit(name);
+      const sub = await publicRedditClient.getSubreddit(name);
 
       const data = {
-        name: sub.display_name,
-        display_name: sub.display_name_prefixed,
+        name: sub.name,
+        display_name: sub.display_name,
         subscribers: sub.subscribers,
-        active_users: sub.accounts_active,
-        created_utc: new Date(sub.created_utc * 1000).toISOString(),
+        active_users: sub.active_users,
+        created_utc: new Date(sub.created * 1000).toISOString(),
         is_nsfw: sub.over18,
-        description: sub.public_description
+        description: sub.description
       };
 
       // Get and parse rules
-      const rules = await redditClient.getSubredditRules(name);
+      const rules = await publicRedditClient.getSubredditRules(name);
       const rulesData = this.parseRules(sub.description + '\n\n' + rules.map(r => `${r.short_name}: ${r.description}`).join('\n'));
       Object.assign(data, rulesData);
 
@@ -115,7 +116,7 @@ class ClientSubredditScraper {
 
   async calculateEngagement(subreddit) {
     try {
-      const posts = await redditClient.getHotPosts(subreddit, 50);
+      const posts = await publicRedditClient.getRecentPosts(subreddit, 50);
 
       const upvotes = posts.map(p => p.score);
       const comments = posts.map(p => p.num_comments);
@@ -145,7 +146,7 @@ class ClientSubredditScraper {
 
   async analyzeBestPostingTimes(subreddit) {
     try {
-      const posts = await redditClient.getTopPosts(subreddit, 'month', 100);
+      const posts = await publicRedditClient.getTopPosts(subreddit, 'month', 100);
 
       const performanceByTime = {};
 
