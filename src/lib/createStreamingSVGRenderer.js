@@ -16,7 +16,7 @@ import createSceneLayerManager from './createSceneLayerManager';
 import {Colors, LayerLevels, NamedGroups} from './constants';
 import createStreetView from './createStreetView';
 import getComplimentaryColor from './getComplimentaryColor';
-import {isNSFW} from './nsfwFilter';
+// isNSFW no longer needed - using Y-coordinate filtering instead
 
 export default function createStreamingSVGRenderer(canvas) {
   let ignoreSVGViewBox = false;
@@ -318,6 +318,69 @@ export default function createStreamingSVGRenderer(canvas) {
       .on('element-start', handleElementStart)
       .on('element-end', handleElementEnd)
       .load();
+
+    // Add test label after SVG loads (temporary - will make this more robust)
+    setTimeout(() => {
+      addNSFWRegionLabels();
+    }, 3000);
+  }
+
+  // Add geographic region names to NSFW islands
+  function addNSFWRegionLabels() {
+    // TEMPORARY: Add coordinate grid for positioning (set to false when done)
+    const SHOW_GRID = true;
+    if (SHOW_GRID) {
+      for (let x = 10000; x <= 24000; x += 1000) {
+        for (let y = 2000; y <= 12000; y += 1000) {
+          labelsText.addText({
+            text: `${x/1000}k,${y/1000}k`,
+            x: x,
+            y: y,
+            fontSize: 80,
+            color: 0xffff0044,  // Yellow, semi-transparent
+            cx: 0.5,
+          });
+        }
+      }
+    }
+
+    // Region labels with colors matching their areas
+    // Colors use format 0xRRGGBBaa where aa is alpha (33 = ~20% opacity for subtle effect)
+    const regionLabels = [
+      // Top-Right: Kpop/Creator content (kpopfap area) - PINK region
+      // Region bounds: ~20k-23k x, ~9k-11k y
+      { name: 'Idol Isles', x: 21500, y: 10200, fontSize: 280, color: 0xdd88aa44 },
+
+      // Upper-Left: Teal/Cyan region - smaller area
+      // Region bounds: ~11k-13k x, ~7k-9k y
+      { name: 'Rendezvous Reef', x: 12200, y: 8000, fontSize: 180, color: 0x66aaaa44 },
+
+      // Bottom-Right: Amateur/GoneWild content - PINK region
+      // Region bounds: ~20k-24k x, ~2k-6k y
+      { name: 'Amateur Atoll', x: 21800, y: 4200, fontSize: 300, color: 0xdd88aa44 },
+
+      // Bottom-Center: Anime/Hentai content - PURPLE region
+      // Region bounds: ~13k-17k x, ~2k-5k y
+      { name: 'Hentai Harbor', x: 15200, y: 3800, fontSize: 280, color: 0x9966cc44 },
+
+      // Center: Mixed/General NSFW - BLUE/TEAL region
+      // Region bounds: ~15k-19k x, ~5k-8k y
+      { name: 'Pleasure Point', x: 17200, y: 6800, fontSize: 280, color: 0x6699cc44 },
+    ];
+
+    regionLabels.forEach(label => {
+      labelsText.addText({
+        text: label.name,
+        x: label.x,
+        y: label.y,
+        fontSize: label.fontSize,
+        color: label.color,
+        cx: 0.5,
+      });
+    });
+
+    scene.renderFrame();
+    console.log('Added NSFW region labels');
   }
 
   function handleElementStart(element) {
@@ -366,6 +429,14 @@ export default function createStreamingSVGRenderer(canvas) {
 
   function appendTextLabel(el) {
     let fontSize = getNumericAttribute(el, 'font-size');
+    let y = transformY(getNumericAttribute(el, 'y') - fontSize);
+
+    // Filter text labels by Y coordinate (same as nodes)
+    const Y_THRESHOLD = 11000;
+    if (y > Y_THRESHOLD) {
+      return;
+    }
+
     let alpha = Math.floor(
       (el.attributes.has('fill-opacity') ? getNumericAttribute(el, 'fill-opacity') : 0.2
     ) * 0xff);
@@ -374,7 +445,7 @@ export default function createStreamingSVGRenderer(canvas) {
     color = (color & (0xffffff00)) | alpha;
     labelsText.addText({
       x: getNumericAttribute(el, 'x'),
-      y: transformY(getNumericAttribute(el, 'y') - fontSize),
+      y,
       color,
       text: el.innerText,
       fontSize,
@@ -389,8 +460,11 @@ export default function createStreamingSVGRenderer(canvas) {
     let nodeName = getTextAttribute(el, 'id');
     if (nodeName[0] === '_') nodeName = nodeName.substr(1);
 
-    // Skip non-NSFW subreddits
-    if (!isNSFW(nodeName)) {
+    // Only show subreddits in the NSFW islands (bottom of map)
+    // Y <= 11000 captures all NSFW islands (highest is kpopfucks at y=10711)
+    // Excludes main continent which starts at y~13000
+    const Y_THRESHOLD = 11000;
+    if (y > Y_THRESHOLD) {
       return;
     }
 
@@ -450,6 +524,16 @@ export default function createStreamingSVGRenderer(canvas) {
     // if (id.indexOf('polygon') === 0) return;
 
     let { points, color } = parseBorder(el);
+
+    // Filter polygons by average Y coordinate of their points
+    const Y_THRESHOLD = 11000;
+    if (points.length > 0) {
+      let avgY = points.reduce((sum, p) => sum + p[1], 0) / points.length;
+      if (avgY > Y_THRESHOLD) {
+        return;
+      }
+    }
+
     boundariesFill.addPolygon({ polygon: points, color: color });
     let clusterId = (id && id.substr(1)) || '';
     clusterColors.set(clusterId, color)
